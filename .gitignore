@@ -1,0 +1,8 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+Session.vim
+tags
+
+# Ignore Gradle build output directory
+build
+bin/

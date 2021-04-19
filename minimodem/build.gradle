@@ -1,0 +1,15 @@
+
+plugins {
+    id 'sonar.java-library-conventions'
+}
+
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+    dependsOn cleanTest
+    testLogging.showStandardStreams = true
+}
+
