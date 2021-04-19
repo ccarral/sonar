@@ -19,7 +19,7 @@ public class MinimodemTest{
     @BeforeEach
     public void setUp(){
 
-        this.testString = "Muchos años después, frente al pelotón de fusilamiento, el coronel Aureliano Buendía había de recordar aquella tarde remota en que su padre lo llevó a conocer el hielo.";
+        this.testString = "HOLA ESTO ES TEXTO ANSI";
         this.input = new ByteArrayInputStream(testString.getBytes());
     }
 
@@ -52,6 +52,44 @@ public class MinimodemTest{
             System.out.println(e);
         }
             
+    }
+
+    @Disabled("Genera ruido (literalmente)")
+    @DisplayName("Enviar y recibir en dos procesos en la misma máquina")
+    @Test public void testSendRecv(){
+        try{
+            MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.RTTY);
+            MinimodemReceiver rx = new MinimodemReceiver(BaudMode.RTTY);
+            Process processTx = tx.initProcess();
+            Process processRx = rx.initProcess();
+
+            // STDIN del proceso de tx 
+            OutputStream outputStream = processTx.getOutputStream();
+
+            // STDOUT del proceso de rx
+            InputStream inputStream = processRx.getInputStream();
+            byte[] buffer = new byte[1024];
+            int read = 0;
+            while((read = this.input.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+                outputStream.flush();
+            }
+
+            int ch;
+            StringBuilder sb = new StringBuilder();
+            while((ch = inputStream.read()) != -1 && sb.length()!=this.testString.length()) {
+                sb.append((char) ch);
+            }
+
+            String received = sb.toString();
+
+            assertEquals(this.testString, received);
+
+                                
+        }catch(Exception e){
+            System.out.println(e);
+        }
+
     }
 
 
