@@ -1,6 +1,7 @@
 
 plugins {
     id 'sonar.java-library-conventions'
+    id 'com.github.sherter.google-java-format' version '1.10.0'
 }
 
 
@@ -11,6 +12,10 @@ test {
 	}
     dependsOn cleanTest
     testLogging.showStandardStreams = true
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
