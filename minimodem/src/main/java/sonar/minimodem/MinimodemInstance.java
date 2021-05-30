@@ -9,7 +9,7 @@ public abstract class MinimodemInstance {
   public MinimodemInstance(BaudMode baudMode)
       throws IOException, InterruptedException, MinimodemNotInPathException {
 
-    // Check that minimodem is in path
+    // Verificar que minimodem está en el path.
     Process minimodem = Runtime.getRuntime().exec("minimodem");
     int retcode = minimodem.waitFor();
 

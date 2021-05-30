@@ -54,32 +54,42 @@ public class MinimodemTest {
     }
   }
 
-  @Disabled("Genera ruido (literalmente)")
   @DisplayName("Enviar y recibir en dos procesos en la misma máquina")
+  // @Disabled("Genera ruido (literalmente)")
   @Test
   public void testSendRecv() {
     try {
-      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.RTTY);
-      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.RTTY);
-      Process processTx = tx.initProcess();
-      Process processRx = rx.initProcess();
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
+      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      Process txProcess = tx.initProcess();
+      Process rxProcess = rx.initProcess();
 
       // STDIN del proceso de tx
-      OutputStream outputStream = processTx.getOutputStream();
+      OutputStream outputStream = txProcess.getOutputStream();
 
       // STDOUT del proceso de rx
-      InputStream inputStream = processRx.getInputStream();
+      InputStream inputStream = rxProcess.getInputStream();
       byte[] buffer = new byte[1024];
       int read = 0;
       while ((read = this.input.read(buffer)) != -1) {
         outputStream.write(buffer, 0, read);
-        outputStream.flush();
       }
+
+      outputStream.flush();
+      outputStream.close();
 
       int ch;
       StringBuilder sb = new StringBuilder();
-      while ((ch = inputStream.read()) != -1 && sb.length() != this.testString.length()) {
+
+      int i = 0;
+      while ((ch = inputStream.read()) != -1) {
+
         sb.append((char) ch);
+        i++;
+        if (i == 23) {
+          inputStream.close();
+          break;
+        }
       }
 
       String received = sb.toString();
