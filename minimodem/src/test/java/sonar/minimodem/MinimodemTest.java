@@ -94,10 +94,13 @@ public class MinimodemTest {
 
       String received = sb.toString();
 
+      txProcess.destroy();
+      rxProcess.destroy();
+
       assertEquals(this.testString, received);
 
     } catch (Exception e) {
-      System.out.println(e);
+      System.err.println(e);
     }
   }
 }
