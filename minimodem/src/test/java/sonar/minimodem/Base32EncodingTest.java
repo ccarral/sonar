@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 import java.util.Random;
 import org.apache.commons.codec.binary.*;
-import org.apache.commons.io.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.*;
 
 public class Base32EncodingTest {
   InputStream input;
@@ -30,7 +30,7 @@ public class Base32EncodingTest {
   }
 
   @DisplayName("Probar que la codificación base 32 funciona como esperamos.")
-  // @Disabled("Tardado")
+  @Disabled("Tardado")
   @Test
   public void testBase32BothWays() {
     try {
@@ -67,7 +67,7 @@ public class Base32EncodingTest {
   }
 
   @DisplayName("Probar que Minimodem puede transmitir bytes arbitrarios codificados en base 32")
-  // @Disabled("Tardado")
+  @EnabledIfEnvironmentVariable(named = "FULL", matches = "1")
   @Test
   public void testBase32MinimodemTxRxArbitraryBytes() {
     try {

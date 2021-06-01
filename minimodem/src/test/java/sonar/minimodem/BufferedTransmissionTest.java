@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 import java.util.Random;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.*;
 
 public class BufferedTransmissionTest {
 
@@ -25,7 +26,7 @@ public class BufferedTransmissionTest {
   }
 
   @DisplayName("Probar tx y rx buffereada.")
-  // @Disabled("Tardado")
+  @EnabledIfEnvironmentVariable(named = "FULL", matches = "1")
   @Test
   public void testTxRx() {
     try {
