@@ -55,7 +55,7 @@ public class MinimodemTest {
   }
 
   @DisplayName("Enviar y recibir en dos procesos en la misma máquina")
-  // @Disabled("Genera ruido (literalmente)")
+  @Disabled("Genera ruido (literalmente)")
   @Test
   public void testSendRecv() {
     try {

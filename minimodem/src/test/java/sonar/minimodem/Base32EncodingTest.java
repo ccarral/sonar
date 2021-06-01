@@ -13,11 +13,14 @@ public class Base32EncodingTest {
   byte[] testString;
 
   @BeforeEach
-  public void setUp() {
-    int min = 10;
-    int max = 30;
+  public void setUp() throws InterruptedException {
+
+    Thread.sleep(3000);
+    int min = 700;
+    int max = 1000;
     Random random = new Random();
     int randomLen = random.ints(min, max).findFirst().getAsInt();
+    // randomLen = 400;
 
     this.testString = new byte[randomLen];
 
@@ -27,6 +30,7 @@ public class Base32EncodingTest {
   }
 
   @DisplayName("Probar que la codificación base 32 funciona como esperamos.")
+  // @Disabled("Tardado")
   @Test
   public void testBase32BothWays() {
     try {
@@ -51,7 +55,6 @@ public class Base32EncodingTest {
       writer.write(testString);
       writer.flush();
       writer.close();
-      // byte buffer[] = base32InputStream.readAllBytes();
 
       String read = reader.readLine();
 
@@ -64,9 +67,12 @@ public class Base32EncodingTest {
   }
 
   @DisplayName("Probar que Minimodem puede transmitir bytes arbitrarios codificados en base 32")
+  // @Disabled("Tardado")
   @Test
   public void testBase32MinimodemTxRxArbitraryBytes() {
     try {
+      System.out.println(
+          "Nota: puede tomar un poco de tiempo dependiendo del número de bytes elegido al azar.");
 
       MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
