@@ -5,8 +5,6 @@ import org.apache.commons.codec.binary.Base32OutputStream;
 import sonar.minimodem.*;
 
 public class SonarSocket {
-  // private ObjectOutputStream objectOutputStream;
-  // private ObjectInputStream objectInputStream;
 
   private BufferedTransmitter innerOutputStream;
   private BufferedReceiver innerInputStream;
@@ -14,9 +12,6 @@ public class SonarSocket {
   public SonarSocket(BufferedReceiver in, BufferedTransmitter out) throws IOException {
     this.innerInputStream = in;
     this.innerOutputStream = out;
-
-    // this.objectInputStream = new ObjectInputStream(in);
-    // this.objectOutputStream = new ObjectOutputStream(out);
   }
 
   public void writePacket(Packet packet) throws IOException {

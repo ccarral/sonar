@@ -27,7 +27,7 @@ public class SocketTest {
 
       Random random = new Random();
 
-      Packet sent = new Packet(0, 1);
+      Packet sent = new Packet(24, 10009);
 
       for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
         sent.write((byte) random.nextInt());
@@ -47,7 +47,7 @@ public class SocketTest {
       socket.close();
 
     } catch (Exception e) {
-      System.err.println(e);
+      e.printStackTrace();
     }
   }
 }
