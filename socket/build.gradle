@@ -1,0 +1,25 @@
+plugins {
+    id 'sonar.java-library-conventions'
+    id 'com.github.sherter.google-java-format' version '0.9'
+}
+
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+    dependsOn cleanTest
+    testLogging.showStandardStreams = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':minimodem')
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+}
