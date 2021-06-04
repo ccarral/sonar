@@ -47,7 +47,7 @@ public class BufferedTransmissionTest {
       }
 
       transmitter.flush();
-      transmitter.getInnerWriter().close();
+      transmitter.getInnerWriter().eof();
 
       int i = 0;
       int ch;
