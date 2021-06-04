@@ -28,7 +28,6 @@ public class SonarSocket {
     Packet p = new Packet(0, 1);
     int b;
     while ((b = this.innerInputStream.read()) != -1) {
-      // System.out.println(byteCount);
       p.data[byteCount++] = (byte) b;
       if (byteCount == Packet.BUFF) {
         break;

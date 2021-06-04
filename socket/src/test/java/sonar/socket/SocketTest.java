@@ -3,6 +3,7 @@ package sonar.socket;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Random;
+import java.util.zip.CRC32;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
 import sonar.minimodem.*;
@@ -40,9 +41,21 @@ public class SocketTest {
       assertEquals(sent.getSeq(), received.getSeq());
       assertEquals(sent.getAck(), received.getAck());
 
+      // Verificar que es un paquete lleno
+      assertEquals(sent.getDataLength(), Packet.BUFF - Packet.HEADERS);
+
       for (int i = 0; i < Packet.BUFF; i++) {
         assertEquals(sent.data[i], received.data[i]);
       }
+
+      // Verificar que coinciden los crc
+      CRC32 crc32 = new CRC32();
+      crc32.update(received.data, Packet.HEADERS, received.getDataLength());
+
+      long calculated = crc32.getValue();
+      long got = received.getCRC32();
+
+      assertEquals(got, calculated);
 
       socket.close();
 
