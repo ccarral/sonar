@@ -50,6 +50,8 @@ public class SocketTest {
 
       // Verificar que coinciden los crc
       CRC32 crc32 = new CRC32();
+      crc32.update(received.getSeq());
+      crc32.update(received.getAck());
       crc32.update(received.data, Packet.HEADERS, received.getDataLength());
 
       long calculated = crc32.getValue();

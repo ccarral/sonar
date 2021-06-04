@@ -23,6 +23,9 @@ public class Packet implements Serializable {
 
     this.crc32 = new CRC32();
 
+    crc32.update(seq);
+    crc32.update(ack);
+
     ByteBuffer ackBuf = ByteBuffer.allocate(4);
     ackBuf.putInt(ack);
     byte[] ackArray = ackBuf.array();
@@ -55,7 +58,7 @@ public class Packet implements Serializable {
     return ByteBuffer.wrap(ack).getInt();
   }
 
-  public long getSeq() {
+  public int getSeq() {
     byte[] seq = new byte[4];
     for (int i = 0; i < 4; i++) {
       seq[i] = this.data[SEQ + i];
