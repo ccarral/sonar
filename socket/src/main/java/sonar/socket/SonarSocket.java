@@ -1,6 +1,7 @@
 package sonar.socket;
 
 import java.io.*;
+import java.util.Arrays;
 import org.apache.commons.codec.binary.Base32OutputStream;
 import sonar.minimodem.*;
 
@@ -24,7 +25,19 @@ public class SonarSocket {
   }
 
   public Packet receivePacket() throws IOException {
-    int byteCount = 0;
+
+    // Detectar número mágico
+    byte[] magic = new byte[4];
+
+    while (true) {
+      this.innerInputStream.read(magic);
+      if (Arrays.equals(Packet.MAGIC_BYTES, magic)) {
+        break;
+      }
+    }
+
+    int byteCount = Packet.MAGIC_BYTES.length;
+
     Packet p = new Packet(0, 1);
     int b;
     while ((b = this.innerInputStream.read()) != -1) {
