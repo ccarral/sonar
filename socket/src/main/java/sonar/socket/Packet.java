@@ -1,25 +1,34 @@
 package sonar.socket;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 
-public class Packet implements Serializable {
+public class Packet {
   public byte[] data;
 
-  private static final int ACK = 0;
-  private static final int SEQ = 4;
-  private static final int DATA_LEN = 8;
+  private static final int MAGIC = 0;
+  private static final int ACK = 4;
+  private static final int SEQ = 8;
+  private static final int DATA_LEN = 12;
   private static final int CRC32 = 16;
   public static final int BUFF = 128;
-  // Bytes que ocupan ack, seq, crc32 y dataLen
+
+  // Bytes que ocupan magic, ack, seq, crc32 y dataLen
   public static final int HEADERS = 24;
+
+  // Número mágico para sincronización
+  public static final byte[] MAGIC_BYTES = {0xC, 0xA, 0xC, 0xA};
 
   private int cursor;
   private CRC32 crc32;
 
   public Packet(int seq, int ack) {
     this.data = new byte[BUFF];
+
+    this.data[MAGIC] = MAGIC_BYTES[0];
+    this.data[MAGIC + 1] = MAGIC_BYTES[1];
+    this.data[MAGIC + 2] = MAGIC_BYTES[2];
+    this.data[MAGIC + 3] = MAGIC_BYTES[3];
 
     this.crc32 = new CRC32();
 

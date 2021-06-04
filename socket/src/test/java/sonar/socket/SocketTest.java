@@ -30,6 +30,9 @@ public class SocketTest {
 
       Packet sent = new Packet(24, 10009);
 
+      assertEquals(sent.getSeq(), 24);
+      assertEquals(sent.getAck(), 10009);
+
       for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
         sent.write((byte) random.nextInt());
       }
