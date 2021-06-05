@@ -2,6 +2,12 @@ package sonar.socket;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.*;
 import org.apache.commons.codec.binary.Base32OutputStream;
 import sonar.minimodem.*;
 
@@ -10,9 +16,56 @@ public class SonarSocket {
   private BufferedTransmitter innerOutputStream;
   private BufferedReceiver innerInputStream;
 
+  private static final int NO_SEQ = 0;
+  private static final int NO_ACK = 1;
+
+  private static final int RETRIES = 3;
+
+  private int seqCount;
+
+  // Activado cuando un ACK para un paquete no fue recibido despues de RETRIES
+  private boolean timeout;
+
+  // Lista en donde se guardan los Ack que vienen de regreso
+  private LinkedList<Integer> incomingAckList;
+
+  // Lista de donde se obtienen los números de ack siguientes
+  private LinkedList<Integer> outGoingAckList;
+
+  // Lista de Packets que no han recibido ack de vuelta
+  private LinkedList<Packet> packetsToBeAckd;
+
+  // Número de intentos por ack
+  // Si uno de estos tiene más de 3, regresa excepción de timout
+  private Map<Integer, Integer> tries;
+
+  private Packet currentPacket;
+
+  private ScheduledExecutorService defaultScheduledExecutor;
+
   public SonarSocket(BufferedReceiver in, BufferedTransmitter out) throws IOException {
     this.innerInputStream = in;
     this.innerOutputStream = out;
+
+    this.seqCount = NO_SEQ;
+
+    this.timeout = false;
+
+    this.outGoingAckList = new LinkedList<Integer>();
+
+    this.incomingAckList = new LinkedList<Integer>();
+
+    this.packetsToBeAckd = new LinkedList<Packet>();
+
+    this.tries = Collections.synchronizedMap(new HashMap<Integer, Integer>());
+
+    this.defaultScheduledExecutor = new ScheduledThreadPoolExecutor(2);
+
+    this.currentPacket = new Packet(this.getNextSeq(), this.getNextAck());
+  }
+
+  private void setGlobalTimeoutFlag(boolean value) {
+    this.timeout = value;
   }
 
   public void writePacket(Packet packet) throws IOException {
@@ -23,6 +76,15 @@ public class SonarSocket {
 
     this.innerOutputStream.getInnerWriter().close();
   }
+
+  // Envía un paquete y si no se recibe un ack en cierto tiempo,
+  // se activa una bandera para reenvío
+  public void writeTimedPacket(
+      Packet packet,
+      long timeout,
+      HashMap<Integer, Integer> tries,
+      LinkedList<Packet> packetsToBeAcked)
+      throws TimeoutException {}
 
   public Packet receivePacket() throws IOException {
 
@@ -57,5 +119,18 @@ public class SonarSocket {
   public void close() throws IOException {
     this.innerOutputStream.close();
     this.innerInputStream.close();
+  }
+
+  private int getNextSeq() {
+    return ++this.seqCount;
+  }
+
+  private int getNextAck() {
+    try {
+      int ack = this.outGoingAckList.getFirst();
+      return ack;
+    } catch (NoSuchElementException e) {
+      return NO_ACK;
+    }
   }
 }
