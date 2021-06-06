@@ -3,6 +3,7 @@ package sonar.socket;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Random;
+import java.util.concurrent.*;
 import java.util.zip.CRC32;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
@@ -66,6 +67,43 @@ public class SocketTest {
 
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testReceiveTimedPacket() {
+    try {
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
+      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+
+      BufferedTransmitter transmitter = new BufferedTransmitter(tx);
+      BufferedReceiver receiver = new BufferedReceiver(rx);
+
+      SonarSocket socket = new SonarSocket(receiver, transmitter);
+
+      Random random = new Random();
+
+      Packet sent = new Packet(24, 10009);
+
+      assertEquals(sent.getSeq(), 24);
+      assertEquals(sent.getAck(), 10009);
+
+      for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
+        sent.write((byte) random.nextInt());
+      }
+
+      socket.writePacket(sent);
+
+      Future<Packet> future = socket.timedReceivePacket();
+
+      Packet received = future.get(SonarSocket.DELAY_MS, TimeUnit.MILLISECONDS);
+
+      for (int i = 0; i < Packet.BUFF; i++) {
+        assertEquals(sent.data[i], received.data[i]);
+      }
+
+    } catch (Exception e) {
+      fail("El paquete no se mandó en el timeout");
     }
   }
 }

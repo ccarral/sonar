@@ -19,6 +19,12 @@ public class SonarSocket {
   private static final int NO_SEQ = 0;
   private static final int NO_ACK = 1;
 
+  public static final long DELAY_MS = 2300;
+
+  private boolean globalExceptionFlag;
+
+  private Throwable lastException;
+
   private static final int RETRIES = 3;
 
   private int seqCount;
@@ -50,6 +56,8 @@ public class SonarSocket {
     this.seqCount = NO_SEQ;
 
     this.timeout = false;
+
+    this.globalExceptionFlag = false;
 
     this.outGoingAckList = new LinkedList<Integer>();
 
@@ -110,6 +118,21 @@ public class SonarSocket {
     }
 
     return p;
+  }
+
+  private Packet wrappedReceivedPacket() {
+    Packet p = new Packet(NO_SEQ, NO_ACK);
+    try {
+      p = this.receivePacket();
+    } catch (Exception e) {
+      this.globalExceptionFlag = true;
+      this.lastException = e;
+    }
+    return p;
+  }
+
+  public CompletableFuture<Packet> timedReceivePacket() {
+    return CompletableFuture.supplyAsync(this::wrappedReceivedPacket);
   }
 
   public Base32OutputStream getBase32OutputStream() {
