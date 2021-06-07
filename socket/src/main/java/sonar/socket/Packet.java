@@ -10,11 +10,12 @@ public class Packet {
   private static final int ACK = 4;
   private static final int SEQ = 8;
   private static final int DATA_LEN = 12;
-  private static final int CRC32 = 16;
+  private static final int EOF = 16;
+  private static final int CRC32 = 17;
   public static final int BUFF = 128;
 
-  // Bytes que ocupan magic, ack, seq, crc32 y dataLen
-  public static final int HEADERS = 24;
+  // Bytes que ocupan magic, ack, seq, crc32, dataLen y eof
+  public static final int HEADERS = 25;
 
   // Número mágico para sincronización
   public static final byte[] MAGIC_BYTES = {0xC, 0xA, 0xC, 0xA};
@@ -29,6 +30,8 @@ public class Packet {
     this.data[MAGIC + 1] = MAGIC_BYTES[1];
     this.data[MAGIC + 2] = MAGIC_BYTES[2];
     this.data[MAGIC + 3] = MAGIC_BYTES[3];
+
+    this.data[EOF] = 0x0;
 
     this.crc32 = new CRC32();
 
@@ -52,7 +55,16 @@ public class Packet {
     return ByteBuffer.wrap(ack).getInt();
   }
 
-  public setAck(int ack) {
+  public void setEOF(boolean eof) {
+    this.data[EOF] = eof ? (byte) 0x1 : (byte) 0x0;
+  }
+
+  public boolean getEOF() {
+    return this.data[EOF] == 0x1;
+  }
+
+  public void setAck(int ack) {
+    ByteBuffer ackBuf = ByteBuffer.allocate(4);
     ackBuf.putInt(ack);
     byte[] ackArray = ackBuf.array();
 
@@ -70,7 +82,7 @@ public class Packet {
     return ByteBuffer.wrap(seq).getInt();
   }
 
-  public setSeq(int seq) {
+  public void setSeq(int seq) {
     ByteBuffer seqBuf = ByteBuffer.allocate(4);
     seqBuf.putInt(seq);
     byte[] seqArray = seqBuf.array();
