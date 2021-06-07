@@ -86,9 +86,6 @@ public class SocketTest {
 
       Packet sent = new Packet(24, 10009);
 
-      assertEquals(sent.getSeq(), 24);
-      assertEquals(sent.getAck(), 10009);
-
       for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
         sent.write((byte) random.nextInt());
       }
@@ -102,6 +99,41 @@ public class SocketTest {
       for (int i = 0; i < Packet.BUFF; i++) {
         assertEquals(sent.data[i], received.data[i]);
       }
+
+      socket.close();
+
+    } catch (Exception e) {
+      fail("El paquete no se mandó en el timeout");
+    }
+  }
+
+  @Test
+  @DisplayName("Test de writeLockStep")
+  public void testWriteLockstep() {
+    try {
+      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
+
+      BufferedTransmitter transmitter = new BufferedTransmitter(tx);
+      BufferedReceiver receiver = new BufferedReceiver(rx);
+
+      SonarSocket socket = new SonarSocket(receiver, transmitter);
+
+      Random random = new Random();
+
+      Packet sent = new Packet(24, 10009);
+
+      for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
+        sent.write((byte) random.nextInt());
+      }
+
+      Packet received = socket.writeLockstep(sent, SonarSocket.DELAY_MS * 2);
+
+      for (int i = 0; i < Packet.BUFF; i++) {
+        assertEquals(sent.data[i], received.data[i]);
+      }
+
+      socket.close();
 
     } catch (Exception e) {
       fail("El paquete no se mandó en el timeout");
