@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'sonar'
-include('app', 'list', 'utilities', 'minimodem', 'socket')
+include('send','listen','app', 'list', 'utilities', 'minimodem', 'socket')
