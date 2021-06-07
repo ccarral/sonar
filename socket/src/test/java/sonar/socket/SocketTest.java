@@ -19,8 +19,8 @@ public class SocketTest {
   public void sendSinglePacket() {
 
     try {
-      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
 
       BufferedTransmitter transmitter = new BufferedTransmitter(tx);
       BufferedReceiver receiver = new BufferedReceiver(rx);
@@ -74,8 +74,8 @@ public class SocketTest {
   @DisplayName("Recibir un paquete en un lapso de tiempo")
   public void testReceiveTimedPacket() {
     try {
-      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
 
       BufferedTransmitter transmitter = new BufferedTransmitter(tx);
       BufferedReceiver receiver = new BufferedReceiver(rx);
