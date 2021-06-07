@@ -22,6 +22,8 @@ public class SonarSocket {
 
   public static final long DELAY_MS = 2300;
 
+  private boolean eofFlag;
+
   private boolean checksumExceptionFlag;
 
   private boolean ioException;
@@ -62,6 +64,8 @@ public class SonarSocket {
 
     this.timeout = false;
 
+    this.eofFlag = false;
+
     this.checksumExceptionFlag = false;
 
     this.ioException = false;
@@ -80,6 +84,9 @@ public class SonarSocket {
   }
 
   public void writePacket(Packet packet) throws IOException {
+    if (this.eofFlag) {
+      packet.setEOF(true);
+    }
     for (int i = 0; i < Packet.BUFF; i++) {
       this.innerOutputStream.write(packet.data[i]);
       this.innerOutputStream.flush();
@@ -205,6 +212,11 @@ public class SonarSocket {
         }
       }
     }
+  }
+
+  // Activa internamente la bandera eof para los paquetes que  envía (y recibe).
+  public void signalEOF() {
+    this.eofFlag = true;
   }
 
   // Bloquear hasta que se recibe la bandera EOF

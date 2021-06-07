@@ -100,9 +100,6 @@ public class Packet {
       data[cursor++] = b;
       this.incrementDataLength();
       this.updateCRC(b);
-      if (this.cursor == BUFF) {
-        this.setEOF(true);
-      }
     }
   }
 

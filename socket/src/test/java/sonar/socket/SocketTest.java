@@ -108,7 +108,7 @@ public class SocketTest {
   }
 
   @Test
-  @DisplayName("Test de writeLockStep")
+  @DisplayName("Test de writeLockStep con bandera EOF")
   public void testWriteLockstep() {
     try {
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
@@ -127,11 +127,15 @@ public class SocketTest {
         sent.write((byte) random.nextInt());
       }
 
+      socket.signalEOF();
+
       Packet received = socket.writeLockstep(sent, SonarSocket.DELAY_MS * 2);
 
       for (int i = 0; i < Packet.BUFF; i++) {
         assertEquals(sent.data[i], received.data[i]);
       }
+
+      assertTrue(received.getEOF());
 
       socket.close();
 
