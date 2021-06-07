@@ -38,7 +38,7 @@ public class SendMain {
 
     } catch (Exception e) {
       System.err.println("El programa falló por los siguientes motivos:");
-      System.err.println(e.toString());
+      System.err.println(e.getMessage());
     }
   }
 }

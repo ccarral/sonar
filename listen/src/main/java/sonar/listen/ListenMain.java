@@ -1,7 +1,27 @@
 package sonar.listen;
 
+import sonar.minimodem.*;
+import sonar.socket.*;
+
 public class ListenMain {
   public static void main(String[] args) {
-    System.out.println("shh! listen...");
+    try {
+      System.out.println("shh! listen...");
+      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
+
+      BufferedTransmitter transmitter = new BufferedTransmitter(tx);
+      BufferedReceiver receiver = new BufferedReceiver(rx);
+
+      SonarSocket socket = new SonarSocket(receiver, transmitter);
+
+      Packet sync = socket.receivePacket();
+      System.out.println("Se recibió paquete de sincronización");
+      socket.writePacket(sync);
+
+    } catch (Exception e) {
+      System.err.println("Error escuchando");
+      System.err.println(e.getMessage());
+    }
   }
 }
