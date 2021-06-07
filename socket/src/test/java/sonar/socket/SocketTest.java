@@ -71,6 +71,7 @@ public class SocketTest {
   }
 
   @Test
+  @DisplayName("Recibir un paquete en un lapso de tiempo")
   public void testReceiveTimedPacket() {
     try {
       MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
@@ -94,7 +95,7 @@ public class SocketTest {
 
       socket.writePacket(sent);
 
-      Future<Packet> future = socket.timedReceivePacket();
+      Future<Packet> future = socket.timedReceivePacket0();
 
       Packet received = future.get(SonarSocket.DELAY_MS, TimeUnit.MILLISECONDS);
 

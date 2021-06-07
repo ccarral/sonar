@@ -35,23 +35,8 @@ public class Packet {
     crc32.update(seq);
     crc32.update(ack);
 
-    ByteBuffer ackBuf = ByteBuffer.allocate(4);
-    ackBuf.putInt(ack);
-    byte[] ackArray = ackBuf.array();
-
-    this.data[ACK] = ackArray[0];
-    this.data[ACK + 1] = ackArray[1];
-    this.data[ACK + 2] = ackArray[2];
-    this.data[ACK + 3] = ackArray[3];
-
-    ByteBuffer seqBuf = ByteBuffer.allocate(4);
-    seqBuf.putInt(seq);
-    byte[] seqArray = seqBuf.array();
-
-    this.data[SEQ] = seqArray[0];
-    this.data[SEQ + 1] = seqArray[1];
-    this.data[SEQ + 2] = seqArray[2];
-    this.data[SEQ + 3] = seqArray[3];
+    this.setAck(ack);
+    this.setSeq(seq);
 
     this.setDataLength(0);
 
@@ -67,12 +52,33 @@ public class Packet {
     return ByteBuffer.wrap(ack).getInt();
   }
 
+  public setAck(int ack) {
+    ackBuf.putInt(ack);
+    byte[] ackArray = ackBuf.array();
+
+    this.data[ACK] = ackArray[0];
+    this.data[ACK + 1] = ackArray[1];
+    this.data[ACK + 2] = ackArray[2];
+    this.data[ACK + 3] = ackArray[3];
+  }
+
   public int getSeq() {
     byte[] seq = new byte[4];
     for (int i = 0; i < 4; i++) {
       seq[i] = this.data[SEQ + i];
     }
     return ByteBuffer.wrap(seq).getInt();
+  }
+
+  public setSeq(int seq) {
+    ByteBuffer seqBuf = ByteBuffer.allocate(4);
+    seqBuf.putInt(seq);
+    byte[] seqArray = seqBuf.array();
+
+    this.data[SEQ] = seqArray[0];
+    this.data[SEQ + 1] = seqArray[1];
+    this.data[SEQ + 2] = seqArray[2];
+    this.data[SEQ + 3] = seqArray[3];
   }
 
   public void write(byte b) throws IndexOutOfBoundsException {

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.*;
+import java.util.zip.CRC32;
 import org.apache.commons.codec.binary.Base32OutputStream;
 import sonar.minimodem.*;
 
@@ -39,7 +40,7 @@ public class SonarSocket {
   private LinkedList<Integer> outGoingAckList;
 
   // Lista de Packets que no han recibido ack de vuelta
-  private LinkedList<Packet> packetsToBeAckd;
+  private LinkedList<Packet> outgoingPackets;
 
   // Número de intentos por ack
   // Si uno de estos tiene más de 3, regresa excepción de timout
@@ -63,7 +64,7 @@ public class SonarSocket {
 
     this.incomingAckList = new LinkedList<Integer>();
 
-    this.packetsToBeAckd = new LinkedList<Packet>();
+    this.outgoingPackets = new LinkedList<Packet>();
 
     this.tries = Collections.synchronizedMap(new HashMap<Integer, Integer>());
 
@@ -94,7 +95,7 @@ public class SonarSocket {
       LinkedList<Packet> packetsToBeAcked)
       throws TimeoutException {}
 
-  public Packet receivePacket() throws IOException {
+  public Packet receivePacket() throws IOException, NonMatchingChecksumException {
 
     // Detectar número mágico
     byte[] magic = new byte[4];
@@ -117,6 +118,17 @@ public class SonarSocket {
       }
     }
 
+    // Verificar crc32
+    CRC32 calculated = new CRC32();
+
+    calculated.update(p.getSeq());
+    calculated.update(p.getAck());
+    calculated.update(p.data, Packet.HEADERS, p.getDataLength());
+
+    if (calculated.getValue() != p.getCRC32()) {
+      throw new NonMatchingChecksumException();
+    }
+
     return p;
   }
 
@@ -131,8 +143,70 @@ public class SonarSocket {
     return p;
   }
 
-  public CompletableFuture<Packet> timedReceivePacket() {
+  public CompletableFuture<Packet> timedReceivePacket0() {
     return CompletableFuture.supplyAsync(this::wrappedReceivedPacket);
+  }
+
+  public Packet timedReceivePacket(long timeout)
+      throws ExecutionException, InterruptedException, TimeoutException {
+    Future<Packet> future = timedReceivePacket0();
+    Packet p = future.get(timeout, TimeUnit.MILLISECONDS);
+    return p;
+  }
+
+  // Escribe un paquete y recibe un paquete
+  public Packet writeLockstep(Packet p, long timeout)
+      throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    this.writePacket(p);
+    Packet received = this.timedReceivePacket(timeout);
+    return received;
+  }
+
+  public void write(byte b) {
+    if (this.currentPacket.getDataLength() == Packet.BUFF - Packet.HEADERS) {
+      this.addToOutgoingQueue(this.currentPacket);
+      this.currentPacket = new Packet(NO_SEQ, NO_ACK);
+    }
+    this.currentPacket.write(b);
+  }
+
+  public void writeLoop() throws ExecutionException, IOException, TimeoutException {
+    while (!this.outgoingPackets.isEmpty() && !this.outGoingAckList.isEmpty()) {
+
+      // Revisar intentos para el siguiente Packet
+      Packet next = this.outgoingPackets.getFirst();
+      Integer tries = this.tries.putIfAbsent(next.getSeq(), 1);
+
+      if (tries != null && tries >= SonarSocket.RETRIES) {
+        this.timeout = true;
+        // Throw algo?
+      }
+
+      if (tries == null) {
+        // Packete recién agregado a la cola, agregarle seq y ack
+        int nextSeq = this.getNextSeq();
+        int nextAck = this.getNextAck();
+        next.setSeq(nextSeq);
+        next.setAck(nextAck);
+      }
+
+      int timeouts = 0;
+
+      while (true) {
+        try {
+          Packet received = this.writeLockstep(next, SonarSocket.DELAY_MS);
+
+        } catch (Exception e) {
+          timeouts++;
+        }
+      }
+
+      if (received.getDataLength() > 0) {}
+    }
+  }
+
+  public void addToOutgoingQueue(Packet p) {
+    this.outgoingPackets.addLast(p);
   }
 
   public Base32OutputStream getBase32OutputStream() {
