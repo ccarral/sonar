@@ -30,7 +30,7 @@ public class SonarSocket {
 
   private IOException ioExceptionHolder = null;
 
-  private static final int RETRIES = 3;
+  private static final int RETRIES = 5;
 
   private int seqCount;
 
@@ -207,7 +207,7 @@ public class SonarSocket {
     }
   }
 
-  // Bloquea hasta que termina la transmisión
+  // Bloquear hasta que se recibe la bandera EOF
   public byte read() {
     return 0x0;
   }

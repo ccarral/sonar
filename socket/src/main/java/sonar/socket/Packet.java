@@ -31,7 +31,7 @@ public class Packet {
     this.data[MAGIC + 2] = MAGIC_BYTES[2];
     this.data[MAGIC + 3] = MAGIC_BYTES[3];
 
-    this.data[EOF] = 0x0;
+    this.setEOF(false);
 
     this.crc32 = new CRC32();
 
@@ -100,6 +100,9 @@ public class Packet {
       data[cursor++] = b;
       this.incrementDataLength();
       this.updateCRC(b);
+      if (this.cursor == BUFF) {
+        this.setEOF(true);
+      }
     }
   }
 
