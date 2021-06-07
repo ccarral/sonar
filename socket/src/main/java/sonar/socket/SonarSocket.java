@@ -22,9 +22,13 @@ public class SonarSocket {
 
   public static final long DELAY_MS = 2300;
 
-  private boolean globalExceptionFlag;
+  private boolean checksumExceptionFlag;
 
-  private Throwable lastException;
+  private boolean ioException;
+
+  private NonMatchingChecksumException checksumExceptionHolder = null;
+
+  private IOException ioExceptionHolder = null;
 
   private static final int RETRIES = 3;
 
@@ -34,7 +38,7 @@ public class SonarSocket {
   private boolean timeout;
 
   // Lista en donde se guardan los Ack que vienen de regreso
-  private LinkedList<Integer> incomingAckList;
+  private LinkedList<Byte> incomingByteList;
 
   // Lista de donde se obtienen los números de ack siguientes
   private LinkedList<Integer> outGoingAckList;
@@ -58,11 +62,13 @@ public class SonarSocket {
 
     this.timeout = false;
 
-    this.globalExceptionFlag = false;
+    this.checksumExceptionFlag = false;
+
+    this.ioException = false;
 
     this.outGoingAckList = new LinkedList<Integer>();
 
-    this.incomingAckList = new LinkedList<Integer>();
+    this.incomingByteList = new LinkedList<Byte>();
 
     this.outgoingPackets = new LinkedList<Packet>();
 
@@ -73,10 +79,6 @@ public class SonarSocket {
     this.currentPacket = new Packet(this.getNextSeq(), this.getNextAck());
   }
 
-  private void setGlobalTimeoutFlag(boolean value) {
-    this.timeout = value;
-  }
-
   public void writePacket(Packet packet) throws IOException {
     for (int i = 0; i < Packet.BUFF; i++) {
       this.innerOutputStream.write(packet.data[i]);
@@ -85,15 +87,6 @@ public class SonarSocket {
 
     this.innerOutputStream.getInnerWriter().close();
   }
-
-  // Envía un paquete y si no se recibe un ack en cierto tiempo,
-  // se activa una bandera para reenvío
-  public void writeTimedPacket(
-      Packet packet,
-      long timeout,
-      HashMap<Integer, Integer> tries,
-      LinkedList<Packet> packetsToBeAcked)
-      throws TimeoutException {}
 
   public Packet receivePacket() throws IOException, NonMatchingChecksumException {
 
@@ -109,7 +102,8 @@ public class SonarSocket {
 
     int byteCount = Packet.MAGIC_BYTES.length;
 
-    Packet p = new Packet(0, 1);
+    Packet p = new Packet(NO_SEQ, NO_ACK);
+
     int b;
     while ((b = this.innerInputStream.read()) != -1) {
       p.data[byteCount++] = (byte) b;
@@ -136,9 +130,12 @@ public class SonarSocket {
     Packet p = new Packet(NO_SEQ, NO_ACK);
     try {
       p = this.receivePacket();
-    } catch (Exception e) {
-      this.globalExceptionFlag = true;
-      this.lastException = e;
+    } catch (NonMatchingChecksumException chksm) {
+      this.checksumExceptionFlag = true;
+      this.checksumExceptionHolder = chksm;
+    } catch (IOException io) {
+      this.ioException = true;
+      this.ioExceptionHolder = io;
     }
     return p;
   }
@@ -148,61 +145,71 @@ public class SonarSocket {
   }
 
   public Packet timedReceivePacket(long timeout)
-      throws ExecutionException, InterruptedException, TimeoutException {
+      throws ExecutionException, InterruptedException, TimeoutException, IOException,
+          NonMatchingChecksumException {
     Future<Packet> future = timedReceivePacket0();
     Packet p = future.get(timeout, TimeUnit.MILLISECONDS);
+    if (this.checksumExceptionFlag) {
+      throw this.checksumExceptionHolder;
+    }
+    if (this.ioException) {
+      throw this.ioExceptionHolder;
+    }
+
     return p;
   }
 
   // Escribe un paquete y recibe un paquete
   public Packet writeLockstep(Packet p, long timeout)
-      throws IOException, ExecutionException, InterruptedException, TimeoutException {
+      throws IOException, ExecutionException, InterruptedException, TimeoutException,
+          NonMatchingChecksumException {
     this.writePacket(p);
     Packet received = this.timedReceivePacket(timeout);
     return received;
   }
 
+  // Recibe un paquete con timeout y escribe inmediatamente un Ack
+  public Packet receiveLockstep(long timeout)
+      throws IOException, TimeoutException, NonMatchingChecksumException, ExecutionException,
+          InterruptedException {
+    Packet received = this.timedReceivePacket(timeout);
+    Packet ackPacket = new Packet(NO_SEQ, received.getSeq());
+    this.writePacket(ackPacket);
+    return received;
+  }
+
   public void write(byte b) {
     if (this.currentPacket.getDataLength() == Packet.BUFF - Packet.HEADERS) {
-      this.addToOutgoingQueue(this.currentPacket);
       this.currentPacket = new Packet(NO_SEQ, NO_ACK);
     }
     this.currentPacket.write(b);
   }
 
-  public void writeLoop() throws ExecutionException, IOException, TimeoutException {
-    while (!this.outgoingPackets.isEmpty() && !this.outGoingAckList.isEmpty()) {
+  // Escribe el paquete actual, sin importarle si está lleno o no.
+  // Intenta recibir un paquete de ACK correspondiente
+  public void flush() throws NumberOfTriesExceededException {
+    int tries = 0;
+    while (true) {
+      try {
+        tries++;
+        Packet received = this.writeLockstep(this.currentPacket, SonarSocket.DELAY_MS * 3);
 
-      // Revisar intentos para el siguiente Packet
-      Packet next = this.outgoingPackets.getFirst();
-      Integer tries = this.tries.putIfAbsent(next.getSeq(), 1);
+        if (received.getAck() != currentPacket.getSeq()) {
+          // Dios te ayude
+          throw new Exception("El ack no coincide con el seq mandado.");
+        }
 
-      if (tries != null && tries >= SonarSocket.RETRIES) {
-        this.timeout = true;
-        // Throw algo?
-      }
-
-      if (tries == null) {
-        // Packete recién agregado a la cola, agregarle seq y ack
-        int nextSeq = this.getNextSeq();
-        int nextAck = this.getNextAck();
-        next.setSeq(nextSeq);
-        next.setAck(nextAck);
-      }
-
-      int timeouts = 0;
-
-      while (true) {
-        try {
-          Packet received = this.writeLockstep(next, SonarSocket.DELAY_MS);
-
-        } catch (Exception e) {
-          timeouts++;
+      } catch (Exception e) {
+        if (tries > SonarSocket.RETRIES) {
+          throw new NumberOfTriesExceededException();
         }
       }
-
-      if (received.getDataLength() > 0) {}
     }
+  }
+
+  // Bloquea hasta que termina la transmisión
+  public byte read() {
+    return 0x0;
   }
 
   public void addToOutgoingQueue(Packet p) {
