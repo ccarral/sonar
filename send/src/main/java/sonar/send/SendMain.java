@@ -30,7 +30,8 @@ public class SendMain {
 
       Packet syncPacket = new Packet(666, 999);
 
-      socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * (8 + 1));
+      // Formula: (tamaño/128).redondearHaciaArriba() * DELAY_MS
+      socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * (32 + 4));
 
       // Bloquea hasta que el servidor recibe el paquete y lo vuelve a enviar
       // Packet received = socket.receivePacket();
