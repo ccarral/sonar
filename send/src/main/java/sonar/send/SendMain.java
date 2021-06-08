@@ -27,7 +27,7 @@ public class SendMain {
         System.err.printf("El archivo '%s' no existe.", args[0]);
       }
 
-      Packet syncPacket = new Packet(666, 666);
+      Packet syncPacket = new Packet(666, 999);
 
       socket.writePacket(syncPacket);
 
@@ -38,7 +38,7 @@ public class SendMain {
 
     } catch (Exception e) {
       System.err.println("El programa falló por los siguientes motivos:");
-      System.err.println(e.getMessage());
+      System.err.println(e.toString());
     }
   }
 }

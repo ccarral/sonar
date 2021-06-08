@@ -21,7 +21,7 @@ public class ListenMain {
 
     } catch (Exception e) {
       System.err.println("Error escuchando");
-      System.err.println(e.getMessage());
+      System.err.println(e.toString());
     }
   }
 }
