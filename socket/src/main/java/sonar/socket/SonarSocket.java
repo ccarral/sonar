@@ -20,7 +20,7 @@ public class SonarSocket {
   private static final int NO_SEQ = 0;
   private static final int NO_ACK = 1;
 
-  public static final long DELAY_MS = 6000;
+  public static final long DELAY_MS = 3000;
 
   private boolean eofFlag;
 
