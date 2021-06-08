@@ -7,7 +7,7 @@ import sonar.socket.*;
 public class ListenMain {
   public static void main(String[] args) {
     try {
-      System.out.println("shh! listen...");
+      System.out.println("Escuchando...");
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
       MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
 
@@ -20,7 +20,7 @@ public class ListenMain {
       System.out.println("Recibiendo paquete de sincronización");
 
       socket.writePacket(sync);
-      System.out.println("Paquete de sincronización mandado");
+      System.out.println("Archivo recibido");
 
       byte[] bytesNombre = new byte[16];
 

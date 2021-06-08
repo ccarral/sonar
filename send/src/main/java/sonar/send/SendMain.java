@@ -48,7 +48,7 @@ public class SendMain {
       }
 
       // Escribe un paquete, si no se recibe respuesta en cierto tiempo, manda error.
-      Packet recibido = socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * 64);
+      Packet recibido = socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * 2);
 
       System.out.println("Recibido paquete de sincronización");
 
