@@ -6,12 +6,19 @@ import java.util.zip.CRC32;
 public class Packet {
   public byte[] data;
 
+  // 4 bytes
   private static final int MAGIC = 0;
+  // 4 bytes
   private static final int ACK = 4;
+  // 4 bytes
   private static final int SEQ = 8;
+  // 4 bytes
   private static final int DATA_LEN = 12;
+  // 1 byte
   private static final int EOF = 16;
+  // 8 byte
   private static final int CRC32 = 17;
+
   public static final int BUFF = 128;
 
   // Bytes que ocupan magic, ack, seq, crc32, dataLen y eof
@@ -37,6 +44,7 @@ public class Packet {
 
     crc32.update(seq);
     crc32.update(ack);
+    this.setCRC32(crc32.getValue());
 
     this.setAck(ack);
     this.setSeq(seq);
@@ -45,6 +53,10 @@ public class Packet {
 
     // Posiciona el cursor justo después de los headers
     this.cursor = HEADERS;
+  }
+
+  public Packet(byte[] data) {
+    this.data = data;
   }
 
   public int getAck() {

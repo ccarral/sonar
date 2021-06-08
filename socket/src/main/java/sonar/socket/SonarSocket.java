@@ -107,24 +107,35 @@ public class SonarSocket {
       }
     }
 
-    int byteCount = Packet.MAGIC_BYTES.length;
+    // Packet p = new Packet(NO_SEQ, NO_ACK);
+    //
+    byte[] buffer = new byte[Packet.BUFF];
 
-    Packet p = new Packet(NO_SEQ, NO_ACK);
+    for (int i = 0; i < Packet.MAGIC_BYTES.length; i++) {
+      buffer[i] = Packet.MAGIC_BYTES[i];
+    }
+
+    int byteCount = Packet.MAGIC_BYTES.length;
 
     int b;
     while ((b = this.innerInputStream.read()) != -1) {
-      p.data[byteCount++] = (byte) b;
+      buffer[byteCount++] = (byte) b;
       if (byteCount == Packet.BUFF) {
         break;
       }
     }
+
+    Packet p = new Packet(buffer);
 
     // Verificar crc32
     CRC32 calculated = new CRC32();
 
     calculated.update(p.getSeq());
     calculated.update(p.getAck());
-    calculated.update(p.data, Packet.HEADERS, p.getDataLength());
+
+    for (int i = Packet.HEADERS; i < Packet.HEADERS + p.getDataLength(); i++) {
+      calculated.update(p.data[i]);
+    }
 
     if (calculated.getValue() != p.getCRC32()) {
       throw new NonMatchingChecksumException();
