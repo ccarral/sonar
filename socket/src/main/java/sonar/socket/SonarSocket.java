@@ -2,10 +2,7 @@ package sonar.socket;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.*;
 import java.util.zip.CRC32;
@@ -46,15 +43,8 @@ public class SonarSocket {
   private LinkedList<Integer> outGoingAckList;
 
   // Lista de Packets que no han recibido ack de vuelta
-  private LinkedList<Packet> outgoingPackets;
-
-  // Número de intentos por ack
-  // Si uno de estos tiene más de 3, regresa excepción de timout
-  private Map<Integer, Integer> tries;
 
   private Packet currentPacket;
-
-  private ScheduledExecutorService defaultScheduledExecutor;
 
   public SonarSocket(BufferedReceiver in, BufferedTransmitter out) throws IOException {
     this.innerInputStream = in;
@@ -73,12 +63,6 @@ public class SonarSocket {
     this.outGoingAckList = new LinkedList<Integer>();
 
     this.incomingByteList = new LinkedList<Byte>();
-
-    this.outgoingPackets = new LinkedList<Packet>();
-
-    this.tries = Collections.synchronizedMap(new HashMap<Integer, Integer>());
-
-    this.defaultScheduledExecutor = new ScheduledThreadPoolExecutor(2);
 
     this.currentPacket = new Packet(this.getNextSeq(), this.getNextAck());
   }
@@ -271,10 +255,6 @@ public class SonarSocket {
   // Bloquear hasta que se recibe la bandera EOF
   public byte read() {
     return 0x0;
-  }
-
-  public void addToOutgoingQueue(Packet p) {
-    this.outgoingPackets.addLast(p);
   }
 
   public Base32OutputStream getBase32OutputStream() {

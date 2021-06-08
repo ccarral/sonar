@@ -27,7 +27,10 @@ public class BufferedTransmitter extends OutputStream {
 
     this.txInstance = tx;
     this.txHandle = tx.initProcess();
+
+    // Obtiene entrada estandar
     this.stdin = this.txHandle.getOutputStream();
+
     this.innerWriter = new Base32OutputStream(stdin);
     // this.byteQueue = new byte[BufferedTransmitter.BLOCK_SIZE];
   }

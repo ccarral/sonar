@@ -19,6 +19,7 @@ public class Packet {
   // 8 byte
   private static final int CRC32 = 17;
 
+  // Longitud total del paquete
   public static final int BUFF = 4096;
 
   // Bytes que ocupan magic, ack, seq, crc32, dataLen y eof

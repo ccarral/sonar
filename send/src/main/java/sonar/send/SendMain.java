@@ -6,14 +6,12 @@ package sonar.send;
 import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
-import java.util.Random;
 import sonar.minimodem.*;
 import sonar.socket.*;
 
 public class SendMain {
   public static void main(String[] args) {
     try {
-      Random random = new Random();
 
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
       MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
@@ -49,15 +47,10 @@ public class SendMain {
         syncPacket.write((byte) b);
       }
 
-      socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * 64);
+      // Escribe un paquete, si no se recibe respuesta en cierto tiempo, manda error.
+      Packet recibido = socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * 64);
 
-      // Bloquea hasta que el servidor recibe el paquete y lo vuelve a enviar
-      // Packet received = socket.receivePacket();
-
-      System.out.println("Recibiendo paquete de sincronización");
-
-      // Crear un buffer del tamaño de la capacidad del Packet
-      // byte[] buffer = new byte[Packet.BUFF - Packet.HEADERS];
+      System.out.println("Recibido paquete de sincronización");
 
     } catch (Exception e) {
       System.err.println("El programa falló por los siguientes motivos:");
