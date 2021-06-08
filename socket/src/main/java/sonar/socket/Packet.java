@@ -19,7 +19,7 @@ public class Packet {
   // 8 byte
   private static final int CRC32 = 17;
 
-  public static final int BUFF = 64;
+  public static final int BUFF = 512;
 
   // Bytes que ocupan magic, ack, seq, crc32, dataLen y eof
   public static final int HEADERS = 25;
