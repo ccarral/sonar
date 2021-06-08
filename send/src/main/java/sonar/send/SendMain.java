@@ -4,12 +4,17 @@
 package sonar.send;
 
 import java.io.*;
+import java.nio.*;
+import java.nio.charset.*;
+import java.util.Random;
 import sonar.minimodem.*;
 import sonar.socket.*;
 
 public class SendMain {
   public static void main(String[] args) {
     try {
+      Random random = new Random();
+
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
       MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
 
@@ -30,8 +35,21 @@ public class SendMain {
 
       Packet syncPacket = new Packet(666, 999);
 
-      // Formula: (tamaño/128).redondearHaciaArriba() * DELAY_MS
-      socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * (32 + 4));
+      // Los primeros 16 bytes corresponden al nombre.
+      byte[] nombre = new byte[16];
+      SendMain.truncateUtf8(args[0], nombre);
+
+      for (int i = 0; i < 16; i++) {
+        syncPacket.write(nombre[i]);
+      }
+
+      // Formula: (tamaño/128).redondearHaciaArriba() * DELAY_MS *2
+      int b = 0;
+      while ((b = fis.read()) != -1) {
+        syncPacket.write((byte) b);
+      }
+
+      socket.writeLockstep(syncPacket, SonarSocket.DELAY_MS * 64);
 
       // Bloquea hasta que el servidor recibe el paquete y lo vuelve a enviar
       // Packet received = socket.receivePacket();
@@ -41,20 +59,19 @@ public class SendMain {
       // Crear un buffer del tamaño de la capacidad del Packet
       // byte[] buffer = new byte[Packet.BUFF - Packet.HEADERS];
 
-      int b = 0;
-      while ((b = fis.read()) != -1) {
-        System.out.printf("%02X", b);
-        socket.write((byte) b);
-      }
-
-      socket.signalEOF();
-
-      // Escribir bytes restantes en el buffer
-      socket.flush();
-
     } catch (Exception e) {
       System.err.println("El programa falló por los siguientes motivos:");
-      System.err.println(e.toString());
+      e.printStackTrace();
     }
+  }
+
+  public static int truncateUtf8(String input, byte[] output) {
+
+    ByteBuffer outBuf = ByteBuffer.wrap(output);
+    CharBuffer inBuf = CharBuffer.wrap(input.toCharArray());
+
+    Charset utf8 = Charset.forName("UTF-8");
+    utf8.newEncoder().encode(inBuf, outBuf, true);
+    return outBuf.position();
   }
 }

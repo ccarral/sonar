@@ -20,7 +20,7 @@ public class SonarSocket {
   private static final int NO_SEQ = 0;
   private static final int NO_ACK = 1;
 
-  public static final long DELAY_MS = 2300;
+  public static final long DELAY_MS = 6000;
 
   private boolean eofFlag;
 
@@ -242,7 +242,7 @@ public class SonarSocket {
       System.out.println("Hola");
       try {
         tries++;
-        Packet received = this.writeLockstepNonStrict(this.currentPacket);
+        Packet received = this.writeLockstep(this.currentPacket, SonarSocket.DELAY_MS * 3);
         System.out.println("flushed");
 
         if (received.getAck() != currentPacket.getSeq()) {
