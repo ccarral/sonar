@@ -11,7 +11,9 @@ import sonar.minimodem.*;
 
 public class SocketTest {
   @BeforeEach
-  public void setUp() {}
+  public void setUp() throws InterruptedException {
+    Thread.sleep(3000);
+  }
 
   @Test
   public void testPacketCRC() {
@@ -112,6 +114,7 @@ public class SocketTest {
 
   @Test
   @DisplayName("Recibir un paquete en un lapso de tiempo")
+  @Disabled()
   public void testReceiveTimedPacket() {
     try {
       MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
@@ -181,6 +184,52 @@ public class SocketTest {
 
     } catch (Exception e) {
       fail("El paquete no se mandó en el timeout");
+    }
+  }
+
+  @Test
+  @DisplayName("Probar dos veces el lockstep")
+  public void testTwoLockstep() {
+    try {
+      MinimodemReceiver rx = new MinimodemReceiver(BaudMode.BELL202);
+      MinimodemTransmitter tx = new MinimodemTransmitter(BaudMode.BELL202);
+
+      BufferedTransmitter transmitter = new BufferedTransmitter(tx);
+      BufferedReceiver receiver = new BufferedReceiver(rx);
+
+      SonarSocket socket = new SonarSocket(receiver, transmitter);
+
+      Random random = new Random();
+
+      Packet sent1 = new Packet(24, 10009);
+      Packet sent2 = new Packet(48, 20009);
+
+      for (int i = Packet.HEADERS; i < Packet.BUFF; i++) {
+        sent1.write((byte) random.nextInt());
+        sent2.write((byte) random.nextInt());
+      }
+
+      Packet received1 = socket.writeLockstep(sent1, SonarSocket.DELAY_MS * 2);
+
+      Thread.sleep(SonarSocket.DELAY_MS);
+
+      Packet received2 = socket.writeLockstep(sent2, SonarSocket.DELAY_MS * 2);
+
+      Thread.sleep(SonarSocket.DELAY_MS);
+
+      for (int i = 0; i < Packet.BUFF; i++) {
+        assertEquals(sent1.data[i], received1.data[i]);
+      }
+
+      for (int i = 0; i < Packet.BUFF; i++) {
+        assertEquals(sent2.data[i], received2.data[i]);
+      }
+
+      socket.close();
+
+    } catch (Exception e) {
+      System.err.println(e.toString());
+      fail();
     }
   }
 }

@@ -22,6 +22,7 @@ public class SendMain {
       File file = new File(args[0]);
 
       FileInputStream fis = new FileInputStream(file);
+      BufferedInputStream bufferedInputStream = new BufferedInputStream(fis);
 
       if (!file.exists()) {
         System.err.printf("El archivo '%s' no existe.", args[0]);
@@ -29,12 +30,26 @@ public class SendMain {
 
       Packet syncPacket = new Packet(666, 999);
 
-      socket.writePacket(syncPacket);
+      socket.writeLockstepNonStrict(syncPacket);
 
       // Bloquea hasta que el servidor recibe el paquete y lo vuelve a enviar
-      Packet received = socket.receivePacket();
+      // Packet received = socket.receivePacket();
 
-      System.out.println("Recibí paquete de confirmación");
+      System.out.println("Recibiendo paquete de sincronización");
+
+      // Crear un buffer del tamaño de la capacidad del Packet
+      // byte[] buffer = new byte[Packet.BUFF - Packet.HEADERS];
+
+      int b = 0;
+      while ((b = fis.read()) != -1) {
+        System.out.printf("%02X", b);
+        socket.write((byte) b);
+      }
+
+      socket.signalEOF();
+
+      // Escribir bytes restantes en el buffer
+      socket.flush();
 
     } catch (Exception e) {
       System.err.println("El programa falló por los siguientes motivos:");

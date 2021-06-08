@@ -16,8 +16,17 @@ public class ListenMain {
       SonarSocket socket = new SonarSocket(receiver, transmitter);
 
       Packet sync = socket.receivePacket();
-      System.out.println("Se recibió paquete de sincronización");
+      System.out.println("Recibiendo paquete de sincronización");
       socket.writePacket(sync);
+      System.out.println("Paquete de sincronización mandado");
+
+      // Inmediatamente después comienza la transmisión del lado del tx
+
+      socket.receiveAllPackets();
+
+      for (byte b : socket.incomingByteList) {
+        System.out.printf("%02X", b);
+      }
 
     } catch (Exception e) {
       System.err.println("Error escuchando");
